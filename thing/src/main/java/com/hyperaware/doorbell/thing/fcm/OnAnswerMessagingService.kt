@@ -27,6 +27,7 @@ class OnAnswerMessagingService : FirebaseMessagingService() {
     companion object {
         private const val TAG = "AnswerMessagingService"
         private const val PROP_DISPOSITION = "disposition"
+        private const val PROP_TASK = "task"
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -42,6 +43,12 @@ class OnAnswerMessagingService : FirebaseMessagingService() {
             Log.d(TAG, "$PROP_DISPOSITION: $disposition")
             val intent = Intent(this, ResponseActivity::class.java)
             intent.putExtra(ResponseActivity.EXTRA_DISPOSITION, disposition)
+            startActivity(intent)
+        }
+        if (remoteMessage.data.containsKey(PROP_TASK)) {
+            val taskId = remoteMessage.data[PROP_TASK].orEmpty()
+            val intent = Intent(this, ResponseActivity::class.java)
+            intent.putExtra(ResponseActivity.EXTRA_PICTURE_TASK, taskId)
             startActivity(intent)
         }
         else {

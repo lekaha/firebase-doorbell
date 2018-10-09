@@ -32,7 +32,6 @@ abstract class BaseMainActivity : Activity() {
 
     companion object {
         private const val TAG = "BaseMainActivity"
-        private const val REQUEST_TAKE_PICTURE = 0
     }
 
     protected lateinit var buttonRing: Button

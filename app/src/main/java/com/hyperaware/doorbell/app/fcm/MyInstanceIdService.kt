@@ -32,6 +32,7 @@ class MyInstanceIdService : FirebaseInstanceIdService() {
         super.onTokenRefresh()
         Log.d(TAG, "FCM token refresh: ${FirebaseInstanceId.getInstance().token!!}")
         FirebaseMessaging.getInstance().subscribeToTopic("rings")
+        FirebaseMessaging.getInstance().subscribeToTopic("tasks_done")
     }
 
 }

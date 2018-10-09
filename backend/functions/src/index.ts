@@ -22,6 +22,13 @@ import * as admin from 'firebase-admin'
 import { basename } from 'path'
 import { DocumentSnapshot } from 'firebase-functions/lib/providers/firestore';
 
+type Task = {
+    id: string,
+    date: Date,
+    imagePath: string,
+    is_taken: boolean
+}
+
 type Ring = {
     id: string,
     date: Date,
@@ -34,7 +41,8 @@ type RingAnswer = {
     disposition: boolean
 }
 
-const cert = JSON.parse(functions.config().serviceaccount.cert.replace(new RegExp("'", 'g'), ''))
+const jsonCert = functions.config().serviceaccount.cert.replace(new RegExp("'", 'g'), '')
+const cert = JSON.parse(jsonCert)
 const adminConfig = JSON.parse(process.env.FIREBASE_CONFIG)
 adminConfig.credential = admin.credential.cert(cert)
 admin.initializeApp(adminConfig)
@@ -49,36 +57,75 @@ async function _onRing(object: functions.storage.ObjectMetadata): Promise<any> {
     const path = object.name
     const id = basename(path, '.jpg')
 
-    try {
-        // Add a document to Firestore with the details of this ring
-        //
-        const ring: Ring = {
-            id: id,
-            date: new Date(),
-            imagePath: path,
-        }
-        console.log('Ring:', ring)
-        await firestore.collection('rings').doc(id).set(ring)
+    if (id.includes('task')) {
+        // this action for Task
+        try {
+            // Add a document to Firestore with the details of this ring
+            //
 
-        // Send a notification to the app
-        //
-        const payload = {
-            notification: {
-                title: 'Ring Ring!',
-                body: 'There is someone at the door!',
-                click_action: 'com.hyperaware.doorbell.ANSWER_RING'
-            },
-            data: {
-                ring_id: id
+            const taskId = id.substring(id.lastIndexOf('_') + 1, id.length)
+            const task: Task = {
+                id: taskId,
+                date: new Date(),
+                imagePath: path,
+                is_taken: true
             }
-        }
+            console.log('Task:', task)
+            await firestore.collection('picture_tasks').doc(taskId).set(task)
 
-        console.log('Sending FCM payload to topic "rings"', payload)
-        const response = await fcm.sendToTopic('rings', payload)
-        console.log('ring sent:', response)
-    }
-    catch (err) {
-        console.error('ring not sent:', err)
+            // Send a notification to the app
+            //
+            const payload = {
+                notification: {
+                    title: 'Task done!',
+                    body: 'Already taken a picture!',
+                    click_action: 'com.hyperaware.doorbell.TAKEN_PIC'
+                },
+                data: {
+                    task_id: taskId
+                }
+            }
+
+            console.log('Sending FCM payload to topic "tasks_done"', payload)
+            const response = await fcm.sendToTopic('tasks_done', payload)
+            console.log('ring sent:', response)
+        }
+        catch (err) {
+            console.error('ring not sent:', err)
+        }
+    } else {
+        // this action for Ring
+        try {
+            // Add a document to Firestore with the details of this ring
+            //
+            const ring: Ring = {
+                id: id,
+                date: new Date(),
+                imagePath: path
+            }
+            console.log('Ring:', ring)
+            await firestore.collection('rings').doc(id).set(ring)
+
+            // Send a notification to the app
+            //
+            const payload = {
+                notification: {
+                    title: 'Ring Ring!',
+                    body: 'There is someone at the door!',
+                    click_action: 'com.hyperaware.doorbell.ANSWER_RING'
+                },
+                data: {
+                    ring_id: id
+                }
+            }
+
+            console.log('Sending FCM payload to topic "rings"', payload)
+            const response = await fcm.sendToTopic('rings', payload)
+            console.log('ring sent:', response)
+        }
+        catch (err) {
+            console.error('ring not sent:', err)
+        }
     }
 }
 
@@ -108,5 +155,35 @@ async function _onAnswer(change: functions.Change<DocumentSnapshot>): Promise<an
     }
     catch (err) {
         console.error(`ring ${ringId} answer error:`, err)
+    }
+}
+
+export const onTakingPicture = functions.firestore.document('/picture_tasks/{picId}').onCreate(_onTakingPicture)
+async function _onTakingPicture(snap: functions.firestore.DocumentSnapshot, context: functions.EventContext): Promise<any> {
+    console.log(context.params)
+
+    const id = context.params.picId
+    const newValue = snap.data()
+    const isTaken = newValue.is_taken
+
+    if (isTaken) {
+        console.log("This task has already been done.")
+        return Promise.resolve()
+    }
+
+    try {
+        // Send a request to the things to take a picture
+        const payload = {
+            data: {
+                task: id
+            }
+        }
+
+        console.log('Sending FCM payload to topic "tasks"', payload)
+        const response = await fcm.sendToTopic('tasks', payload)
+        console.log('task sent:', response)
+    }
+    catch (err) {
+        console.error('task not sent:', err)
     }
 }

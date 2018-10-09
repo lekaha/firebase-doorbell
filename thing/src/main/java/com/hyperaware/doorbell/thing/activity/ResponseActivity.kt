@@ -17,34 +17,52 @@
 package com.hyperaware.doorbell.thing.activity
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.widget.TextView
+import com.google.firebase.storage.FirebaseStorage
 import com.hyperaware.doorbell.thing.R
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ResponseActivity : Activity() {
 
     companion object {
         private const val TAG = "ResponseActivity"
         const val EXTRA_DISPOSITION = "disposition"
+        const val EXTRA_PICTURE_TASK = "task"
     }
 
     private lateinit var tvDisposition: TextView
-    private var disposition: Boolean = false
+    private var disposition: Boolean? = null
+    private var taskId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val intent = intent
 
         val extras = intent.extras
-        if (extras == null || !extras.containsKey(EXTRA_DISPOSITION)) {
-            Log.e(TAG, "$EXTRA_DISPOSITION was not provided")
+        if (extras == null
+            || !extras.containsKey(EXTRA_DISPOSITION)
+            || !extras.containsKey(EXTRA_PICTURE_TASK)) {
+
+            Log.e(TAG, "$EXTRA_DISPOSITION nor $EXTRA_PICTURE_TASK was not provided")
             finish()
             return
         }
 
-        disposition = extras.getBoolean(EXTRA_DISPOSITION)
+        if (extras.containsKey(EXTRA_DISPOSITION)) {
+            disposition = extras.getBoolean(EXTRA_DISPOSITION)
+        }
+
+        if (extras.containsKey(EXTRA_PICTURE_TASK)) {
+            taskId = extras.getString(EXTRA_PICTURE_TASK)
+        }
 
         initViews()
         Handler().postDelayed({ finish() }, 5000)
@@ -52,13 +70,47 @@ class ResponseActivity : Activity() {
 
     private fun initViews() {
         setContentView(R.layout.activity_response)
-        tvDisposition = findViewById(R.id.disposition)
-        tvDisposition.text = if (disposition) {
-            getString(R.string.disposition_come_in)
+
+        disposition?.let {
+            tvDisposition = findViewById(R.id.disposition)
+            tvDisposition.text = if (it) {
+                getString(R.string.disposition_come_in)
+            }
+            else {
+                getString(R.string.disposition_go_away)
+            }
         }
-        else {
-            getString(R.string.disposition_go_away)
+
+        taskId?.let {
+            startActivityForResult(Intent(this, Camera2Activity::class.java),
+                                   REQUEST_TAKE_PICTURE)
         }
     }
 
+    private fun uploadFile(file: File) {
+        val sdf = SimpleDateFormat("task_yyyyMMddHHmmss", Locale.US)
+        val storagePath = "/pictures/${sdf.format(Date())}_$taskId.jpg"
+        Log.i(ResponseActivity.TAG, "Uploading to $file to $storagePath")
+        val ref = FirebaseStorage.getInstance().getReference(storagePath)
+        ref.putFile(Uri.fromFile(file))
+            .addOnSuccessListener(this) {
+                Log.i(ResponseActivity.TAG, "Picture uploaded")
+            }
+            .addOnFailureListener(this) { e ->
+                Log.i(ResponseActivity.TAG, "Upload failed", e)
+            }
+            .addOnCompleteListener(this) {
+                file.delete()
+            }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (resultCode) {
+            Activity.RESULT_CANCELED -> {}
+            Camera2Activity.RESULT_PICTURE -> {
+                val file = data!!.getStringExtra(Camera2Activity.EXTRA_PICTURE_FILE)
+                uploadFile(File(file))
+            }
+        }
+    }
 }

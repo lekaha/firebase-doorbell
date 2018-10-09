@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var vAuthConns: Button
     private lateinit var vAuthMessaging: Button
     private lateinit var vRings: Button
+    private lateinit var vTakePicture: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +83,11 @@ class MainActivity : AppCompatActivity() {
 
         vRings = findViewById<Button>(R.id.btn_rings)
         vRings.setOnClickListener {
+            startActivity(Intent(this, ListRingsActivity::class.java))
+        }
+
+        vTakePicture = findViewById<Button>(R.id.btn_picture)
+        vTakePicture.setOnClickListener {
             startActivity(Intent(this, ListRingsActivity::class.java))
         }
     }
