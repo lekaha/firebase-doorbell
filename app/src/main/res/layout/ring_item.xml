@@ -29,7 +29,7 @@
         app:layout_constraintEnd_toStartOf="@+id/iv_disposition"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_face_black_24dp"
+        app:srcCompat="@drawable/bowl"
         android:contentDescription="@string/cd_guest_image"
         />
 

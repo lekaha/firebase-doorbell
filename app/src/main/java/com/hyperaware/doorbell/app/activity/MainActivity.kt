@@ -29,6 +29,8 @@ import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.hyperaware.doorbell.app.R
+import com.hyperaware.doorbell.app.activity.ShowPictureActivity.Companion.EXTRA_TASK_ID
+import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
 
@@ -88,7 +90,11 @@ class MainActivity : AppCompatActivity() {
 
         vTakePicture = findViewById<Button>(R.id.btn_picture)
         vTakePicture.setOnClickListener {
-            startActivity(Intent(this, ListRingsActivity::class.java))
+            Intent(this, ShowPictureActivity::class.java).apply {
+                putExtra(EXTRA_TASK_ID, UUID.randomUUID().toString())
+                startActivity(this)
+            }
+
         }
     }
 

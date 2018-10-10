@@ -26,6 +26,7 @@ type Task = {
     id: string,
     date: Date,
     imagePath: string,
+    uid: String
     is_taken: boolean
 }
 
@@ -68,7 +69,8 @@ async function _onRing(object: functions.storage.ObjectMetadata): Promise<any> {
                 id: taskId,
                 date: new Date(),
                 imagePath: path,
-                is_taken: true
+                uid: null,
+                is_taken: false
             }
             console.log('Task:', task)
             await firestore.collection('picture_tasks').doc(taskId).set(task)
@@ -82,6 +84,7 @@ async function _onRing(object: functions.storage.ObjectMetadata): Promise<any> {
                     click_action: 'com.hyperaware.doorbell.TAKEN_PIC'
                 },
                 data: {
+                    is_taken: false.toString(),
                     task_id: taskId
                 }
             }
@@ -185,5 +188,33 @@ async function _onTakingPicture(snap: functions.firestore.DocumentSnapshot, cont
     }
     catch (err) {
         console.error('task not sent:', err)
+    }
+}
+
+export const onTakingPictureUpdate = functions.firestore.document('/picture_tasks/{picId}').onUpdate(_onTakingPictureUpdate)
+async function _onTakingPictureUpdate(change: functions.Change<DocumentSnapshot>, context: functions.EventContext): Promise<any> {
+    const taskId = change.before.id  // e.g. 20180327123000
+    const previous = change.before.data() as Task
+    const task = change.after.data() as Task
+    console.log(`Task`, task)
+
+    // Only interested in rings that have a new answer
+    if (previous.is_taken || !task.is_taken) {
+        console.log("This is not the update you're looking for.")
+        return Promise.resolve()
+    }
+
+    const payload = {
+        data: {
+            is_taken: task.is_taken.toString(),
+            task_id: taskId
+        }
+    }
+    try {
+        const response = await fcm.sendToTopic('tasks_action', payload)
+        console.log(`task ${taskId} answer sent:`, response)
+    }
+    catch (err) {
+        console.error(`ring ${taskId} answer error:`, err)
     }
 }

@@ -34,6 +34,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import com.hyperaware.doorbell.app.R
 import com.hyperaware.doorbell.app.model.Ring
+import com.hyperaware.doorbell.app.model.Task
 import java.text.DateFormat
 
 class ListRingsActivity : AppCompatActivity() {
@@ -72,26 +73,26 @@ class ListRingsActivity : AppCompatActivity() {
     }
 
     private val query = FirebaseFirestore.getInstance()
-        .collection("rings").orderBy("date", Query.Direction.DESCENDING)
-    private val options = FirestoreRecyclerOptions.Builder<Ring>()
-        .setQuery(query, Ring::class.java)
+        .collection("picture_tasks").orderBy("date", Query.Direction.DESCENDING)
+    private val options = FirestoreRecyclerOptions.Builder<Task>()
+        .setQuery(query, Task::class.java)
         .build()
 
-    private val mAdapter = object : FirestoreRecyclerAdapter<Ring, RingHolder>(options) {
+    private val mAdapter = object : FirestoreRecyclerAdapter<Task, RingHolder>(options) {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RingHolder {
             val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.ring_item, parent, false)
             return RingHolder(view)
         }
 
-        override fun onBindViewHolder(holder: RingHolder, position: Int, ring: Ring) {
-            val imageRef = FIR_STORAGE.getReference(ring.imagePath!!)
-            val date = ring.date
+        override fun onBindViewHolder(holder: RingHolder, position: Int, task: Task) {
+            val imageRef = FIR_STORAGE.getReference(task.imagePath!!)
+            val date = task.date
             val dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG)
             holder.dateTextView.text = dateFormat.format(date)
             Glide.with(this@ListRingsActivity).load(imageRef).into(holder.ringerImageView)
-            val answer = ring.answer
-            if (answer != null && answer.disposition!!) {
+            val answer = task.isTaken
+            if (answer != null && answer) {
                 holder.answerImageView.setImageDrawable(resources.getDrawable(R.drawable.ic_check_black_24dp))
             }
             else {

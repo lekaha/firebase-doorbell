@@ -1,10 +1,10 @@
 buildscript {
     ext {
-        kotlin_version = '1.2.61'
+        kotlin_version = '1.2.71'
         android_support_version = '27.1.1'
-        thing_play_services_version = '12.0.1'
+        thing_play_services_version = '12.5.20'
         app_play_services_version = '12.0.1'
-        firebase_ui_version = '3.3.0'
+        firebase_ui_version = '4.2.0'
         glide_version = '4.7.1'
     }
     repositories {
@@ -15,7 +15,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.gms:google-services:4.0.1'
+        classpath 'com.google.gms:google-services:4.1.0'
         classpath 'com.google.firebase:firebase-plugins:1.1.5'
         classpath 'io.fabric.tools:gradle:1.25.4'
     }

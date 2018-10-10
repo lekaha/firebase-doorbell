@@ -16,6 +16,7 @@
 
 package com.hyperaware.doorbell.app.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -30,7 +31,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.hyperaware.doorbell.app.R
-import com.hyperaware.doorbell.app.model.Ring
+import com.hyperaware.doorbell.app.model.Task
 
 class ShowPictureActivity : AppCompatActivity() {
 
@@ -42,7 +43,7 @@ class ShowPictureActivity : AppCompatActivity() {
 
     private lateinit var ivProgress: ProgressBar
     private lateinit var ivGuest: ImageView
-    private lateinit var ringReference: DocumentReference
+    private lateinit var taskReference: DocumentReference
     private lateinit var uid: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,8 +78,35 @@ class ShowPictureActivity : AppCompatActivity() {
         initViews()
 
         Log.d(TAG, "Ring id: $taskId")
-        ringReference = FirebaseFirestore.getInstance().collection("picture_tasks").document(taskId)
+        taskReference = FirebaseFirestore.getInstance().collection("picture_tasks").document(taskId)
         populateViews(taskId)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+
+        intent?.also {
+            val taskId = it.getStringExtra(EXTRA_TASK_ID)
+            if (taskReference == null) {
+                taskReference = FirebaseFirestore.getInstance().collection("picture_tasks").document(taskId)
+            }
+
+            taskReference.get()
+                .addOnSuccessListener(this) {
+                    if (it.exists()) {
+                        val task = it.toObject(Task::class.java)!!
+                        Glide.with(this@ShowPictureActivity)
+                            .load(FIR_STORAGE.getReference(task.imagePath!!))
+                            .into(ivGuest)
+                    }
+                    ivProgress.visibility = View.GONE
+                }
+                .addOnFailureListener(this) {
+                    ivProgress.visibility = View.GONE
+                    Log.e(TAG, "Can't fetch ring $taskId", it)
+                    finish()
+                }
+        }
     }
 
     private fun initViews() {
@@ -87,30 +115,22 @@ class ShowPictureActivity : AppCompatActivity() {
         ivGuest = findViewById(R.id.iv_guest)
 
         findViewById<Button>(R.id.btn_no).setOnClickListener {
-            updateAnswer(false)
+            if (ivProgress.visibility == View.GONE) {
+                updateAnswer(false)
+            }
         }
 
         findViewById<Button>(R.id.btn_yes).setOnClickListener {
-            updateAnswer(true)
+            if (ivProgress.visibility == View.GONE) {
+                updateAnswer(true)
+            }
         }
     }
 
     private fun populateViews(ringId: String) {
         val data = hashMapOf<String, Any>()
-        ringReference.set(data)
+        taskReference.set(data)
             .addOnSuccessListener(this) { _ ->
-//                if (snap.exists()) {
-//                    val ring = snap.toObject(Ring::class.java)!!
-//                    Log.d(TAG, "imagePath ${ring.imagePath!!}")
-//                    Glide.with(this@ShowPictureActivity)
-//                        .load(FIR_STORAGE.getReference(ring.imagePath!!))
-//                        .into(ivGuest)
-//                }
-//                else {
-//                    Log.e(TAG, "No document for ring $ringId")
-//                    finish()
-//                }
-
                 ivProgress.visibility = View.VISIBLE
             }
             .addOnFailureListener(this) { error ->
@@ -121,9 +141,9 @@ class ShowPictureActivity : AppCompatActivity() {
     }
 
     private fun updateAnswer(disposition: Boolean) {
-        ringReference.update(
-            "answer.uid", uid,
-            "answer.disposition", disposition)
+        taskReference.update(
+            "uid", uid,
+            "is_taken", disposition)
             .addOnCompleteListener(this) {
                 Log.d(TAG, "Answer written to database")
                 finish()

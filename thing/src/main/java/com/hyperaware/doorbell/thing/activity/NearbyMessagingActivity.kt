@@ -16,9 +16,12 @@
 
 package com.hyperaware.doorbell.thing.activity
 
+import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
+import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.widget.TextView
 import com.google.android.gms.nearby.Nearby
@@ -48,7 +51,13 @@ class NearbyMessagingActivity : Activity() {
         tvStatus = findViewById(R.id.tvStatus)
         updateUi(WaitingForPermission)
 
-        client = Nearby.getMessagesClient(this)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            client = Nearby.getMessagesClient(
+                this,
+                MessagesOptions.Builder().setPermissions(NearbyPermissions.BLE).build()
+            )
+        }
     }
 
     override fun onStart() {
@@ -103,13 +112,13 @@ class NearbyMessagingActivity : Activity() {
     }
 
     private fun subscribe() {
-        val strategy = Strategy.Builder()
-            .setDiscoveryMode(Strategy.DISCOVERY_MODE_SCAN)
-            .setTtlSeconds(Strategy.TTL_SECONDS_MAX)
-            .build()
+//        val strategy = Strategy.Builder()
+//            .setDiscoveryMode(Strategy.DISCOVERY_MODE_BROADCAST)
+//            .setTtlSeconds(Strategy.TTL_SECONDS_DEFAULT)
+//            .build()
 
         val subscribeOpts = SubscribeOptions.Builder()
-            .setStrategy(strategy)
+            .setStrategy(Strategy.BLE_ONLY)
             .setCallback(object : SubscribeCallback() {
                 override fun onExpired() {
                     Log.d(TAG, "onExpired")

@@ -8,7 +8,9 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="com.google.android.things.permission.MANAGE_INPUT_DRIVERS" />
+    <uses-permission android:name="com.google.android.things.permission.USE_PERIPHERAL_IO" />
 
     <uses-permission android:name="android.permission.CAMERA" />
 
@@ -21,6 +23,9 @@
         android:allowBackup="false"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         >
+        <meta-data
+            android:name="com.google.android.nearby.messages.API_KEY"
+            android:value="AIzaSyDLLOoG-hoVoWKEqAfAZMaJNPhDC4HSgI4" />
 
         <activity android:name=".activity.TestMainActivity">
             <intent-filter>

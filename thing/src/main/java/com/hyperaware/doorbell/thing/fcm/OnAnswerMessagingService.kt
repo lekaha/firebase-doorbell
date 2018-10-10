@@ -18,6 +18,7 @@ package com.hyperaware.doorbell.thing.fcm
 
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.hyperaware.doorbell.thing.activity.ResponseActivity
@@ -28,6 +29,7 @@ class OnAnswerMessagingService : FirebaseMessagingService() {
         private const val TAG = "AnswerMessagingService"
         private const val PROP_DISPOSITION = "disposition"
         private const val PROP_TASK = "task"
+        private const val PROP_TASK_ID = "task_id"
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -47,9 +49,17 @@ class OnAnswerMessagingService : FirebaseMessagingService() {
         }
         if (remoteMessage.data.containsKey(PROP_TASK)) {
             val taskId = remoteMessage.data[PROP_TASK].orEmpty()
+            Log.d(TAG, "Data message received task id $taskId")
             val intent = Intent(this, ResponseActivity::class.java)
             intent.putExtra(ResponseActivity.EXTRA_PICTURE_TASK, taskId)
             startActivity(intent)
+        }
+        if (remoteMessage.data.containsKey(PROP_TASK_ID)) {
+            val taskId = remoteMessage.data[PROP_TASK_ID].orEmpty()
+            val doAction = java.lang.Boolean.parseBoolean(remoteMessage.data["is_taken"])
+
+            Log.d(TAG, "Data message received task id $taskId, action=$doAction")
+            //TODO: do action
         }
         else {
             Log.w(TAG, "Data message received without $PROP_DISPOSITION")

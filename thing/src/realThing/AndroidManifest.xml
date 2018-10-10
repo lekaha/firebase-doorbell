@@ -3,12 +3,22 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hyperaware.doorbell.thing">
 
-    <uses-permission android:name="com.google.android.things.permission.USE_PERIPHERAL_IO" />
-
     <application>
 
-        <uses-library android:name="com.google.android.things"/>
+        <!--<activity android:name=".activity.NearbyMessagingActivity">-->
+             <!--&lt;!&ndash;Launch activity as default from Android Studio &ndash;&gt;-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.MAIN"/>-->
+                <!--<category android:name="android.intent.category.LAUNCHER"/>-->
+            <!--</intent-filter>-->
 
+            <!--&lt;!&ndash; Launch activity automatically on boot, and re-launch if the app terminates. &ndash;&gt;-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.MAIN"/>-->
+                <!--<category android:name="android.intent.category.HOME"/>-->
+                <!--<category android:name="android.intent.category.DEFAULT"/>-->
+            <!--</intent-filter>-->
+        <!--</activity>-->
     </application>
 
 </manifest>

@@ -22,12 +22,14 @@ import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.hyperaware.doorbell.app.activity.AnswerRingActivity
+import com.hyperaware.doorbell.app.activity.ShowPictureActivity
 
 class OnRingMessagingService : FirebaseMessagingService() {
 
     companion object {
         private const val TAG = "RingMessagingService"
         private const val PROP_RING_ID = "ring_id"
+        private const val PROP_TASK_ID = "task_id"
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -44,6 +46,13 @@ class OnRingMessagingService : FirebaseMessagingService() {
             val intent = Intent(this, AnswerRingActivity::class.java)
             intent.putExtra(AnswerRingActivity.EXTRA_RING_ID, ringId)
             startActivity(intent)
+        }
+        if (remoteMessage.data.containsKey(PROP_TASK_ID)) {
+            remoteMessage.data[PROP_TASK_ID]?.let {
+                val intent = Intent(OnRingMessagingService@this, ShowPictureActivity::class.java)
+                intent.putExtra(ShowPictureActivity.EXTRA_TASK_ID, it)
+                startActivity(intent)
+            }
         }
         else {
             Log.w(TAG, "Data message received without $PROP_RING_ID")

@@ -16,8 +16,12 @@
 
 package com.hyperaware.doorbell.app.activity
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.TextView
@@ -48,7 +52,48 @@ class NearbyMessagingActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
         updateUi(WaitingForPermission)
 
-        client = Nearby.getMessagesClient(this)
+        if (checkPermissions()) {
+            makeNearbyMessagingClient()
+        }
+        else {
+            ActivityCompat.requestPermissions(this,
+                                              arrayOf(
+                                                  Manifest.permission.ACCESS_FINE_LOCATION
+//                                                  , Manifest.permission_group.MICROPHONE
+                                              ),
+                                              0)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int,
+                                            permissions: Array<String>, grantResults: IntArray) {
+        when (requestCode) {
+            0 -> {
+                if ((grantResults.isNotEmpty()
+                     && grantResults[0] == PackageManager.PERMISSION_GRANTED
+//                     && grantResults[1] == PackageManager.PERMISSION_GRANTED
+                    )) {
+                    makeNearbyMessagingClient()
+                } else {
+                    finish()
+                }
+            }
+        }
+    }
+
+    private fun checkPermissions() = (
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        == PackageManager.PERMISSION_GRANTED
+//        &&
+//        ContextCompat.checkSelfPermission(this, Manifest.permission_group.MICROPHONE)
+//        == PackageManager.PERMISSION_GRANTED
+                                     )
+
+    private fun makeNearbyMessagingClient() {
+        client = Nearby.getMessagesClient(
+            this,
+            MessagesOptions.Builder().setPermissions(NearbyPermissions.BLE).build()
+        )
 
         val lastSignedInAccount = GoogleSignIn.getLastSignedInAccount(this)
         if (lastSignedInAccount != null) {
@@ -66,12 +111,16 @@ class NearbyMessagingActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
         updateUi(WaitingForPermission)
 
-        client.registerStatusCallback(statusCallback)
+        if (checkPermissions()) {
+            client.registerStatusCallback(statusCallback)
+        }
     }
 
     override fun onStop() {
-        client.unpublish(message)
-        client.unregisterStatusCallback(statusCallback)
+        if (checkPermissions()) {
+            client.unpublish(message)
+            client.unregisterStatusCallback(statusCallback)
+        }
 
         super.onStop()
     }
@@ -98,7 +147,7 @@ class NearbyMessagingActivity : AppCompatActivity() {
         }
     }
 
-    private val statusCallback = object: StatusCallback() {
+    private val statusCallback = object : StatusCallback() {
         override fun onPermissionChanged(permissionGranted: Boolean) {
             Log.d(TAG, "onPermissionChanged $permissionGranted")
             updateUi(Publishing)
@@ -109,7 +158,7 @@ class NearbyMessagingActivity : AppCompatActivity() {
     private fun publish() {
         val strategy = Strategy.Builder()
             .setDiscoveryMode(Strategy.DISCOVERY_MODE_BROADCAST)
-            .setTtlSeconds(Strategy.TTL_SECONDS_MAX)
+            .setTtlSeconds(Strategy.TTL_SECONDS_DEFAULT)
             .build()
 
         val publishOpts = PublishOptions.Builder()

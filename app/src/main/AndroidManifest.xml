@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
@@ -17,7 +18,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         >
-
+        <meta-data
+            android:name="com.google.android.nearby.messages.API_KEY"
+            android:value="AIzaSyDLLOoG-hoVoWKEqAfAZMaJNPhDC4HSgI4" />
         <activity android:name=".activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,6 +48,7 @@
             android:name=".activity.ShowPictureActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar"
+            android:launchMode="singleInstance"
             >
             <intent-filter>
                 <action android:name="com.hyperaware.doorbell.TAKEN_PIC" />

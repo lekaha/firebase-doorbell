@@ -96,7 +96,7 @@ class NearbyConnectionsActivity : AppCompatActivity() {
         connectionsClient.startDiscovery(
             "com.hyperaware.doorbell.thing",
             endpointDiscoveryCallback,
-            DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
+            DiscoveryOptions.Builder().setStrategy(Strategy.P2P_STAR).build()
         )
             .addOnSuccessListener(this) {
                 Log.d(TAG, "startDiscovery onSuccess")

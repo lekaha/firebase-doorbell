@@ -20,7 +20,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.widget.TextView
 import com.google.firebase.storage.FirebaseStorage
@@ -47,10 +46,7 @@ class ResponseActivity : Activity() {
         val intent = intent
 
         val extras = intent.extras
-        if (extras == null
-            || !extras.containsKey(EXTRA_DISPOSITION)
-            || !extras.containsKey(EXTRA_PICTURE_TASK)) {
-
+        if (extras == null) {
             Log.e(TAG, "$EXTRA_DISPOSITION nor $EXTRA_PICTURE_TASK was not provided")
             finish()
             return
@@ -65,7 +61,6 @@ class ResponseActivity : Activity() {
         }
 
         initViews()
-        Handler().postDelayed({ finish() }, 5000)
     }
 
     private fun initViews() {
@@ -87,9 +82,11 @@ class ResponseActivity : Activity() {
         }
     }
 
-    private fun uploadFile(file: File) {
-        val sdf = SimpleDateFormat("task_yyyyMMddHHmmss", Locale.US)
-        val storagePath = "/pictures/${sdf.format(Date())}_$taskId.jpg"
+    private fun uploadFile(filePath: String) {
+        val sdf = SimpleDateFormat("yyyyMMddHHmmss", Locale.US)
+        val storagePath = "pictures/task_${sdf.format(Date())}_$taskId.jpg"
+        val file = File(filePath)
+
         Log.i(ResponseActivity.TAG, "Uploading to $file to $storagePath")
         val ref = FirebaseStorage.getInstance().getReference(storagePath)
         ref.putFile(Uri.fromFile(file))
@@ -98,9 +95,11 @@ class ResponseActivity : Activity() {
             }
             .addOnFailureListener(this) { e ->
                 Log.i(ResponseActivity.TAG, "Upload failed", e)
+                finish()
             }
             .addOnCompleteListener(this) {
                 file.delete()
+                finish()
             }
     }
 
@@ -109,7 +108,7 @@ class ResponseActivity : Activity() {
             Activity.RESULT_CANCELED -> {}
             Camera2Activity.RESULT_PICTURE -> {
                 val file = data!!.getStringExtra(Camera2Activity.EXTRA_PICTURE_FILE)
-                uploadFile(File(file))
+                uploadFile(file)
             }
         }
     }
